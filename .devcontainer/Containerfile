@@ -1,0 +1,42 @@
+FROM debian:bookworm-slim
+
+# Install dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl ca-certificates git gcc g++ make bash sudo \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create vscode user with passwordless sudo and home directory
+RUN useradd -m -s /bin/bash vscode \
+    && echo 'vscode ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers.d/90-vscode \
+    && chmod 0440 /etc/sudoers.d/90-vscode
+
+# Fetch latest stable Go version (not rc)
+RUN set -eux; \
+    GO_URL="https://github.com/golang/go/tags"; \
+    LATEST_TAG=$(curl -sSL $GO_URL | grep -oE 'go[0-9]+\.[0-9]+(\.[0-9]+)?"' | grep -v rc | sed 's/"$//'); \
+    LATEST_TAG=$(echo "$LATEST_TAG" | sort -V | tail -n1); \
+    VERSION=${LATEST_TAG#go}; \
+    ARCH=$(dpkg --print-architecture); \
+    case "$ARCH" in \
+      amd64) GOARCH=amd64;; \
+      arm64) GOARCH=arm64;; \
+      *) echo "Unsupported arch: $ARCH"; exit 1;; \
+    esac; \
+    curl -fsSL "https://go.dev/dl/go${VERSION}.linux-${GOARCH}.tar.gz" -o go.tgz; \
+    sudo tar -C /usr/local -xzf go.tgz; \
+    rm go.tgz
+
+# Add Go to PATH for all users
+ENV PATH="/usr/local/go/bin:${PATH}"
+
+# Set user to vscode by default
+USER vscode
+
+# Install Go tools
+RUN go install golang.org/x/tools/gopls@latest && \
+    go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest && \
+    go install golang.org/x/tools/cmd/goimports@latest && \
+    go install honnef.co/go/tools/cmd/staticcheck@latest && \
+    go install github.com/go-delve/delve/cmd/dlv@latest
+
+

@@ -1,0 +1,13 @@
+{
+  "name": "Go-EuVD Bookworm Custom Dev Container",
+  "build": {
+    "dockerfile": "Containerfile"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "golang.Go"
+      ]
+    }
+  }
+}

@@ -81,11 +81,11 @@ import (
 )
 
 func main() {
-	// Default client
-	client := euvd.NewClient()
+    // Default client
+    client := euvd.NewClient()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-	defer cancel()
+    ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+    defer cancel()
     
     // Get latest critical vulnerabilities
     vulnerabilities, err := client.GetLatestCriticalVulnerabilities(ctx)
